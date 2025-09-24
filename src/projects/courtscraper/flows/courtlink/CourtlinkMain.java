@@ -3,9 +3,13 @@ package courtscraper.flows.courtlink;
 import courtscraper.FlowStart;
 import courtscraper.datamanagement.json.JSONGrabbers;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.Duration;
 
 import static courtscraper.flows.courtlink.courtlinkscraper.CourtlinkScrapeMain.courtLinkScrape;
 import static courtscraper.flows.courtlink.courtlinksearchconfig.CourtlinkSearchConfigMain.courtLinkTermInputs;
@@ -35,8 +39,13 @@ public class CourtlinkMain extends FlowStart {
 
         driver.findElement(By.xpath("//*[@id=\"userid\"]")).sendKeys(credentials[0]);
         driver.findElement(By.xpath("//*[@id=\"signInSbmtBtn\"]")).click();
-        Thread.sleep(1500);
-        driver.findElement(By.xpath("//*[@id=\"password\"]")).sendKeys(credentials[1]);
-        driver.findElement(By.xpath("//*[@id=\"signInSbmtBtn\"]")).click();
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(50));
+        // Wait for the element to be present in the DOM
+        WebElement passwordInput = wait.until(
+                ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='password']"))
+        );
+        // Now interact with it
+        passwordInput.sendKeys(credentials[1]);
+        driver.findElement(By.xpath("//*[@id=\"next\"]")).click();
     }
 }

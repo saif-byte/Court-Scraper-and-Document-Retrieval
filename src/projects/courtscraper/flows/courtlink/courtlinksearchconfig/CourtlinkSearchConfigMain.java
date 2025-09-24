@@ -6,7 +6,11 @@ import courtscraper.helpers.guiinputprocessors.ProcessMainInputs;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
 
 import static courtscraper.flows.courtlink.courtlinksearchconfig.StateSearchSelection.searchState;
 import static courtscraper.setups.gui.mainpanelelements.MainComboBoxes.selectedDateType;
@@ -41,8 +45,14 @@ public class CourtlinkSearchConfigMain extends CourtlinkMain {
     }
 
     private static void courtLinkSearchTerms() throws InterruptedException {
-        driver.findElement(By.xpath("//input[@name='keywords']")).sendKeys(processedInputs[0]);
-        Thread.sleep(1000);
+        // Create WebDriverWait object (adjust timeout as needed, e.g., 10 seconds)
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+
+// Wait until the element is visible and interactable
+        WebElement keywordInput = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@name='keywords']")));
+
+// Now send keys
+        keywordInput.sendKeys(processedInputs[0]);
 
     }
 
