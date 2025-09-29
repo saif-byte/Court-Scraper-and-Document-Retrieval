@@ -44,6 +44,6 @@ public class Firefox extends FlowStart {
         if (getHeadless()) {options.addArguments("--headless");}
 
         driver = new FirefoxDriver(options);
-        driver.get("https://www.google.com/");
+//        driver.get("https://www.google.com/");
     }
 }

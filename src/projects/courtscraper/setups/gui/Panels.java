@@ -21,6 +21,8 @@ public class Panels extends Interface {
 
     public static JPanel mainPanel = new JPanel();
     public static GridBagConstraints gbcMain = new GridBagConstraints();
+    public static JPanel retrieveDocketsPanel = new JPanel();
+    public static GridBagConstraints gbcRetrieve = new GridBagConstraints();
 
     public static void mainPanel() throws InterruptedException {
         //borders around edges
@@ -88,5 +90,18 @@ public class Panels extends Interface {
         settingsPanelBoxes();
         settingsPanelButtons();
         settingsPanelCheckBoxes();
+    }
+
+    public static void retrieveDocketsPanel() {
+        retrieveDocketsPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        retrieveDocketsPanel.setLayout(new GridBagLayout());
+
+        gbcRetrieve.fill = GridBagConstraints.BOTH;
+
+        // Build Retrieve Dockets Panel UI from retrievedocketspanelelements
+        courtscraper.setups.gui.retrievedocketspanelelements.RetrieveDocketsPanel.buildRetrieveDocketsPanel();
+
+        // Add all built components into this panel
+        retrieveDocketsPanel.add(courtscraper.setups.gui.retrievedocketspanelelements.RetrieveDocketsPanel.retrieveDocketsPanel);
     }
 }

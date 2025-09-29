@@ -38,6 +38,7 @@ public class Interface extends StartGUI {
 
         topTabs.setPreferredSize(new Dimension(500, 285));
         topTabs.add(mainPanel, "Start Configuration");
+        topTabs.add(retrieveDocketsPanel, "Retrieve Dockets");
         topTabs.add(jobsPanel, "Jobs");
         //topTabs.add(terminalPanel, "Terminal");
         topTabs.add(settingsPanel, "Settings");
@@ -48,6 +49,7 @@ public class Interface extends StartGUI {
 
         //panel setup
         mainPanel();
+        retrieveDocketsPanel();
         jobsPanel();
         terminalPanel();
         settingsPanel();

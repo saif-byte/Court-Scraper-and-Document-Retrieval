@@ -8,6 +8,7 @@ import org.openqa.selenium.WebDriver;
 import java.io.IOException;
 
 import static courtscraper.flows.courtlink.CourtlinkMain.courtLinkFlow;
+import static courtscraper.flows.retirevedockets.RetrieveDocketsMain.retrieveDocketFlow;
 import static courtscraper.flows.states.StateParser.stateRetrievalFlow;
 import static courtscraper.helpers.TabManagement.closeAllTabs;
 import static courtscraper.setups.gui.jobspanelelements.JobsTableBox.updateJobsTable;
@@ -53,4 +54,26 @@ public class FlowStart extends MainButtons {
 
 
     }
+
+    public static void StartRetrieveDocketsFlow() throws IOException, InterruptedException {
+        jobsManager = new JobsManager();
+        runStatus = runLogger.updateInfo("runStatus","Finished");
+
+        try {
+            new Firefox().FirefoxLaunch();
+
+            System.out.println("Retrieve Dockets flow started...");
+
+            retrieveDocketFlow();
+
+        } catch(Exception e) {
+            runStatus = runLogger.updateInfo("runStatus", "Failed");
+            runLogger.logError(e);
+            e.printStackTrace();
+        }
+
+        jobsManager.addJob(runStatus);
+        updateJobsTable();
+    }
+
 }

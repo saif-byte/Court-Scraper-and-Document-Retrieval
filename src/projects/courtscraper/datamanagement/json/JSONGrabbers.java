@@ -28,10 +28,11 @@ public class JSONGrabbers {
             //finds credentials matching input
             if (element.getAsJsonObject().get("ID").getAsString().equals(website)) {
 
-//                grabs username and passwords and puts them in an array
-                String username = element.getAsJsonObject().get("username").getAsString();
-                String password = element.getAsJsonObject().get("password").getAsString();
-
+                //grabs username and passwords and puts them in an array
+//                String username = element.getAsJsonObject().get("username").getAsString();
+//                String password = element.getAsJsonObject().get("password").getAsString();
+                String username = "gfeinstein12";
+                String password = "Jrrfunding1!";
                 loginCreds = new String[]{username, password};
                 return loginCreds;
             }
