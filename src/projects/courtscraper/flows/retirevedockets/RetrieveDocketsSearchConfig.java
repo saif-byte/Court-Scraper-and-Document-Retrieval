@@ -36,8 +36,9 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
         JavascriptExecutor js = (JavascriptExecutor) driver;
         String mainWindow = driver.getWindowHandle(); // Store the main/original tab handle
 
-        List<WebElement> allLis = driver.findElements(By.cssSelector("div.wrapper ol li.usview"));
-        System.out.println("Total li.usview found: " + allLis.size());
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        List<WebElement> allLis = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                By.cssSelector("div.wrapper ol li.usview")));        System.out.println("Total li.usview found: " + allLis.size());
 
         for (int i = 0; i < allLis.size(); i++) {
             try {
@@ -77,6 +78,7 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
             for (String handle : handles) {
                 if (!handle.equals(mainWindow)) {
                     driver.switchTo().window(handle);
+                    clickCheckboxesForProceedingText("complaint");
                     break;
                 }
             }
@@ -151,5 +153,61 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
       driver.findElement(By.className("save")).click();
     }
     }
+    public static void clickCheckboxesForProceedingText(String keyword) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        JavascriptExecutor js = (JavascriptExecutor) driver;
 
+        // Wait for and scroll to proceedings div
+        WebElement proceedingsDiv = wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.id("Proceedings")));
+        js.executeScript("arguments[0].scrollIntoView(true);", proceedingsDiv);
+
+        // Brief pause for scroll completion
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Get all table rows
+        List<WebElement> allRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                By.cssSelector("#Proceedings tbody tr")));
+
+        System.out.println("Total rows found: " + allRows.size());
+
+        int clickedCount = 0;
+
+        // Iterate through each row and check for keyword
+        for (WebElement row : allRows) {
+            try {
+                // Find the proceeding text cell in current row
+                WebElement proceedingTextCell = row.findElement(
+                        By.cssSelector("td[data-proceedingentryname='proceedingtext']"));
+
+                String cellText = proceedingTextCell.getText().trim();
+                System.out.println("Checking row text: " + cellText);
+
+                // Check if text contains the keyword (case-insensitive)
+                if (cellText.toLowerCase().contains(keyword.toLowerCase())) {
+                    System.out.println("Match found: " + cellText);
+
+                    // Find and click the checkbox in this row
+                    WebElement checkbox = row.findElement(
+                            By.cssSelector("input[type='checkbox'].SS_ProceedingLink"));
+
+                    if (!checkbox.isSelected()) {
+                        checkbox.click();
+                        clickedCount++;
+                        System.out.println("Clicked checkbox for: " + cellText);
+                    }
+                }
+            } catch (Exception e) {
+                // Skip rows that don't have the expected structure
+                System.out.println("Skipping row due to missing elements: " + e.getMessage());
+                continue;
+            }
+        }
+
+        System.out.println("Total checkboxes clicked: " + clickedCount);
+    }
 }
