@@ -21,9 +21,9 @@ public class HarrisCounty extends StateSelect {
       throws FileNotFoundException, InterruptedException {
     wait = new WebDriverWait(driver, Duration.ofSeconds(60));
     // grabs harris site and logs in only if reset has recently happened (aka. Google webpage)
-    if (driver.getCurrentUrl().equals("https://www.google.com/")) {
+//    if (driver.getCurrentUrl().equals("https://www.google.com/")) {
       loginHarris();
-    }
+//    }
 
     wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='txtCaseNumber']")))
         .sendKeys(caseNumber);
