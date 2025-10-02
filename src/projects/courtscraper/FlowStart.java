@@ -28,7 +28,7 @@ public class FlowStart extends MainButtons {
 
         try {
             new Firefox().FirefoxLaunch();
-
+            Thread.sleep(500);
             switch (selectedFlowType) {
                 case "Scrape and Retrieve":
                     courtLinkFlow();
