@@ -78,7 +78,9 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
             for (String handle : handles) {
                 if (!handle.equals(mainWindow)) {
                     driver.switchTo().window(handle);
-                    clickCheckboxesForProceedingText("complaint");
+                    clickCheckboxesForProceedingText("Rejection");
+                    clickRetrieveDocumentButton();
+                    clickGetDocumentsButton();
                     break;
                 }
             }
@@ -209,5 +211,45 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
         }
 
         System.out.println("Total checkboxes clicked: " + clickedCount);
+    }
+    public static void clickRetrieveDocumentButton() {
+        try {
+            // Create WebDriverWait with 15 seconds timeout
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+
+            // Wait for the element to be clickable using multiple locator strategies
+            WebElement retrieveButton = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.cssSelector("button[data-buttontype='retrievedocument'][data-action='retrieveproceedings']")
+            ));
+
+            // Click the element
+            retrieveButton.click();
+
+            System.out.println("Successfully clicked Retrieve Document(s) button");
+
+        } catch (Exception e) {
+            System.err.println("Failed to click Retrieve Document(s) button: " + e.getMessage());
+            throw e;
+        }
+    }
+    public static void clickGetDocumentsButton() {
+        try {
+            // Create WebDriverWait with 15 seconds timeout
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+
+            // Wait for the button to be clickable using XPath with exact text match
+            WebElement getDocumentsButton = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.xpath("//button[text()='Get Documents']")
+            ));
+
+            // Click the button
+            getDocumentsButton.click();
+
+            System.out.println("Successfully clicked Get Documents button");
+
+        } catch (Exception e) {
+            System.err.println("Failed to click Get Documents button: " + e.getMessage());
+            throw e;
+        }
     }
 }
