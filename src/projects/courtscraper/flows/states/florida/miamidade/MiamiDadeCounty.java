@@ -32,14 +32,14 @@ public class MiamiDadeCounty extends StateSelect {
     public static void miamiDadeMain(String caseNumber) throws InterruptedException, FileNotFoundException {
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         //grabs miami-dade site and logs in only if reset has recently happened
-//        if (driver.getCurrentUrl().equals("https://www.google.com/")) {
+        if (driver.getCurrentUrl().equals("https://www.site24x7.com/")) {
             loginMiamiDade();
             driver.get("https://www2.miamidadeclerk.gov/ocs/");
             Thread.sleep(500);
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ctl00_ContentPlaceHolder1_lnkStandardSearch2\"]"))).click();
             Thread.sleep(500);
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/main/form/div[4]/div[2]/div/div[5]/div/div/div[1]/ul/li[2]/a"))).click();
-//        }
+        }
 
         List<String> caseNumbers = new ArrayList<>(List.of(caseNumber.split("-"))); //creates case numbers list
 
