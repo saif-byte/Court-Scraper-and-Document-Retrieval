@@ -1,9 +1,10 @@
 package courtscraper.flows.retirevedockets;
 
-import static courtscraper.flows.courtlink.courtlinksearchconfig.StateSearchSelection.searchState;
-
 import courtscraper.helpers.guiinputprocessors.ProcessRetrieveDocketsInputs;
+
+import java.io.*;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -14,6 +15,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+
 
 public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
     static String[] retrieveDocketsProcessedInputs;
@@ -34,20 +36,32 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
     }
     private static void openByLink() throws InterruptedException {
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        String mainWindow = driver.getWindowHandle(); // Store the main/original tab handle
+        String mainWindow = driver.getWindowHandle(); // Store main/original tab handle
+
+        // --- Load already processed titles ---
+        Set<String> processedTitles = loadOpenedTitles(OPENED_DOCUMENT_CSV_PATH);
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         List<WebElement> allLis = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-                By.cssSelector("div.wrapper ol li.usview")));        System.out.println("Total li.usview found: " + allLis.size());
+                By.cssSelector("div.wrapper ol li.usview")));
+        System.out.println("Total li.usview found: " + allLis.size());
 
         for (int i = 0; i < allLis.size(); i++) {
             try {
-                // Re-fetch elements each time to avoid stale element issue
+                // Re-fetch elements to avoid stale element issue
                 List<WebElement> refreshedLis = driver.findElements(By.cssSelector("div.wrapper ol li.usview"));
                 WebElement li = refreshedLis.get(i);
 
                 WebElement link = li.findElement(By.cssSelector("h2.doc-title a"));
-                System.out.println("Opening: " + link.getText());
+                String linkTitle = link.getText().trim();
+
+                // ✅ Skip if already processed before
+                if (processedTitles.contains(linkTitle)) {
+                    System.out.println("Skipping already processed: " + linkTitle);
+                    continue;
+                }
+
+                System.out.println("Opening: " + linkTitle);
 
                 // Scroll into view
                 js.executeScript("arguments[0].scrollIntoView({block: 'center'});", link);
@@ -56,11 +70,20 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
                 Actions actions = new Actions(driver);
                 actions.keyDown(Keys.CONTROL).click(link).keyUp(Keys.CONTROL).build().perform();
 
-                // Small wait for the new tab to appear
+                // Wait for new tab
                 Thread.sleep(1500);
 
-                // Call the scraper function
-                scrapeAndCloseTab(mainWindow);
+                // Scrape the tab and check if successful
+                boolean success = scrapeAndCloseTab(mainWindow);
+
+                // ✅ Only mark as processed if scrape was successful
+                if (success) {
+                    appendTitleToCSV(OPENED_DOCUMENT_CSV_PATH, linkTitle);
+                    processedTitles.add(linkTitle);
+                    System.out.println("✔ Successfully processed: " + linkTitle);
+                } else {
+                    System.out.println("❌ Skipping CSV entry — scrape failed for: " + linkTitle);
+                }
 
             } catch (Exception e) {
                 System.out.println("Skipping li index " + i + " -> " + e.getMessage());
@@ -68,39 +91,43 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
         }
     }
 
+
     /**
      * Switch to the latest opened tab, scrape data, close it, and return to main tab.
      */
-    private static void scrapeAndCloseTab(String mainWindow) {
+    private static boolean scrapeAndCloseTab(String mainWindow) {
+        boolean success = false;
         try {
             // Find new tab handle
             Set<String> handles = driver.getWindowHandles();
             for (String handle : handles) {
                 if (!handle.equals(mainWindow)) {
                     driver.switchTo().window(handle);
-                    clickCheckboxesForProceedingText("Rejection");
-                    clickRetrieveDocumentButton();
-                    clickGetDocumentsButton();
+
+                    // Perform scraping logic
+                    int clickedCount = clickCheckboxesForProceedingText("Rejection");
+                    if (clickedCount > 0) {
+                        clickRetrieveDocumentButton();
+                        Thread.sleep(500);
+                        clickGetDocumentsButton();
+                    }
+                    success = true; // ✅ Only mark as successful if buttons were clicked
+                    System.out.println("Scraping Title: " + driver.getTitle());
+                    String bodyText = driver.findElement(By.tagName("body")).getText();
+                    System.out.println("Page length: " + bodyText.length());
+
+                    // Close new tab and switch back
+                    driver.close();
+                    driver.switchTo().window(mainWindow);
                     break;
                 }
             }
 
-            // ---- Do your scraping here ----
-            System.out.println("Scraping Title: " + driver.getTitle());
-
-            // Example scraping
-            String bodyText = driver.findElement(By.tagName("body")).getText();
-            System.out.println("Page length: " + bodyText.length());
-
-            // ---- Close new tab ----
-            driver.close();
-
-            // ---- Switch back to main/original tab ----
-            driver.switchTo().window(mainWindow);
-
         } catch (Exception e) {
             System.out.println("Error during scraping: " + e.getMessage());
         }
+
+        return success;
     }
 
 
@@ -155,7 +182,7 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
       driver.findElement(By.className("save")).click();
     }
     }
-    public static void clickCheckboxesForProceedingText(String keyword) {
+    public static int clickCheckboxesForProceedingText(String keyword) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
@@ -208,9 +235,10 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
                 System.out.println("Skipping row due to missing elements: " + e.getMessage());
                 continue;
             }
+
         }
 
-        System.out.println("Total checkboxes clicked: " + clickedCount);
+        return clickedCount;
     }
     public static void clickRetrieveDocumentButton() {
         try {
@@ -252,4 +280,35 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
             throw e;
         }
     }
+    private static Set<String> loadOpenedTitles(String filePath) {
+        Set<String> titles = new HashSet<>();
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            return titles; // empty set if file doesn't exist
+        }
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                titles.add(line.trim());
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading opened tabs CSV: " + e.getMessage());
+        }
+
+        return titles;
+    }
+
+    private static void appendTitleToCSV(String filePath, String title) {
+        try (FileWriter fw = new FileWriter(filePath, true);
+             BufferedWriter bw = new BufferedWriter(fw)) {
+            bw.write(title);
+            bw.newLine();
+        } catch (IOException e) {
+            System.out.println("Error writing to opened tabs CSV: " + e.getMessage());
+        }
+    }
+
+    static String OPENED_DOCUMENT_CSV_PATH = "retrieve_dockets_opened_tabs.csv";
 }
