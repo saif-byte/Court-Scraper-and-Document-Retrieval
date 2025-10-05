@@ -13,8 +13,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 public class RetrieveDocketsMain extends FlowStart {
     public static void retrieveDocketFlow() throws IOException, InterruptedException {
         courtLinkLogin(); //login process
-        RetrieveDocketsSearchConfig.retrieveDocketsTermInputs();
-        Thread.sleep(1000);
+//        RetrieveDocketsSearchConfig.retrieveDocketsTermInputs();
+//        Thread.sleep(1000);
+        RetrieveDocketsSearchConfig.goToDocketAndDocumentPage();
+
     }
 
 

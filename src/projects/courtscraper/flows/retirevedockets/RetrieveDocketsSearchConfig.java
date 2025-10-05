@@ -1,17 +1,16 @@
 package courtscraper.flows.retirevedockets;
 
+import courtscraper.helpers.RetriveDockets.DocumentTracker;
 import courtscraper.helpers.guiinputprocessors.ProcessRetrieveDocketsInputs;
 
 import java.io.*;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -311,4 +310,104 @@ public class RetrieveDocketsSearchConfig extends RetrieveDocketsMain {
     }
 
     static String OPENED_DOCUMENT_CSV_PATH = "retrieve_dockets_opened_tabs.csv";
+
+    public static void goToDocketAndDocumentPage() {
+        driver.get("https://advance.lexis.com/");
+        clickDocketsAndDocumentsTab();
+        List<String> newDownloaded = clickNewDocumentCheckboxes();
+        clickDownloadButton();
+        DocumentTracker.saveNewEntries(newDownloaded);
+
+
+    }
+    public static void clickDocketsAndDocumentsTab() {
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+            // Wait for the tab to be visible and clickable
+            WebElement docketTab = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.xpath("//span[normalize-space(text())='Dockets & Documents']")
+            ));
+
+            // Click the tab
+            docketTab.click();
+
+            System.out.println("✅ 'Dockets & Documents' tab clicked successfully.");
+        } catch (TimeoutException e) {
+            System.out.println("❌ Tab 'Dockets & Documents' not found or not clickable within time limit.");
+        } catch (Exception e) {
+            System.out.println("⚠️ Error while clicking 'Dockets & Documents' tab: " + e.getMessage());
+        }
+    }
+
+    public static void clickDownloadButton() {
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+            // Wait until the Download button is clickable
+            WebElement downloadBtn = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.cssSelector("button[data-qaid='dropdown_Download']")
+            ));
+
+            // Scroll into view to avoid "not clickable" issues
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", downloadBtn);
+            Thread.sleep(500); // small pause to stabilize UI
+
+            // Click using JS to avoid overlay/intercepted issues
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", downloadBtn);
+
+            System.out.println("✅ Clicked the Download button successfully.");
+
+        } catch (Exception e) {
+            System.out.println("⚠️ Failed to click Download button: " + e.getMessage());
+        }
+    }
+    public static List<String> clickNewDocumentCheckboxes() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        List<String> newEntries = new ArrayList<>();
+        Set<String> alreadyDownloaded = DocumentTracker.loadDownloadedEntries();
+
+        try {
+            // Wait until table rows are visible
+            List<WebElement> rows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                    By.cssSelector("tr[_ngcontent-c0]")
+            ));
+
+            for (WebElement row : rows) {
+                try {
+                    String docketName = row.findElement(By.cssSelector("td.largeWidth.activitiestablecell")).getText().trim();
+                    String requestedDate = row.findElements(By.cssSelector("td.mediumWidth.activitiestablecell")).get(0).getText().split("<br")[0].trim();
+
+                    String combination = requestedDate + " | " + docketName;
+
+                    // ✅ Skip if already downloaded
+                    if (alreadyDownloaded.contains(combination)) {
+                        System.out.println("Skipping (already downloaded): " + combination);
+                        continue;
+                    }
+
+                    // ✅ Skip if older than 3 days
+                    if (!DocumentTracker.isWithinLast3Days(requestedDate)) {
+                        System.out.println("Skipping (older than 3 days): " + combination);
+                        continue;
+                    }
+
+                    // ✅ Click checkbox
+                    WebElement checkbox = row.findElement(By.cssSelector("input[type='checkbox']"));
+                    if (!checkbox.isSelected()) checkbox.click();
+
+                    newEntries.add(combination);
+                    System.out.println("Clicked and added: " + combination);
+
+                } catch (Exception inner) {
+                    // Skip row silently if structure differs
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("⚠️ Error processing rows: " + e.getMessage());
+        }
+
+        return newEntries;
+    }
 }
